@@ -56,6 +56,7 @@ export default {
       loginForm: {
         username: '',
         password: ''
+        // role 字段已移除
       }
     };
   },
@@ -76,21 +77,21 @@ export default {
     },
     async handleLogin() {
       try {
-        await loginApi(this.loginForm)
+        const res = await loginApi(this.loginForm)
+        // 保存 token 到本地
+        localStorage.setItem('token', res.token)
         this.$router.push('/findroom')
       } catch (err) {
         alert(err.response?.data?.message || '登录失败')
       }
     },
     bubleCreate() {
-      // 让泡泡生成在 .bubble-container 下
       const container = this.$el.querySelector('.bubble-container');
       const buble = document.createElement('span');
       let r = Math.random() * 5 + 25;
       buble.style.width = r + 'px';
       buble.style.height = r + 'px';
       buble.style.left = Math.random() * this.$el.offsetWidth + 'px';
-      // 兼容 scoped 样式
       const scopeId = this.$el.getAttributeNames().find(name => name.startsWith('data-v-'));
       if (scopeId) {
         buble.setAttribute(scopeId, '');
@@ -283,6 +284,10 @@ input:focus {
 
 input:focus::placeholder {
     opacity: 0;
+}
+
+input::placeholder {
+    color: #bdbdbd;
 }
 
 /* 按钮盒子 */
