@@ -12,18 +12,18 @@
         </div>
         <!-- 注册盒子 -->
         <div class="register-form">
-            <div class="title-box">
-                <h1>注册</h1>
-            </div>
-            <div class="input-box">
-                <input type="text" placeholder="用户名">
-                <input type="password" placeholder="密码">
-                <input type="password" placeholder="确认密码">
-            </div>
-            <div class="btn-box">
-                <button>注册</button>
-                <p @click="mySwitch">已有账号?去登录</p>
-            </div>
+          <div class="title-box">
+            <h1>注册</h1>
+          </div>
+          <div class="input-box">
+            <input type="text" placeholder="用户名" v-model="registerForm.username">
+            <input type="password" placeholder="密码" v-model="registerForm.password">
+            <input type="password" placeholder="确认密码" v-model="registerForm.confirmPassword">
+          </div>
+          <div class="btn-box">
+            <button @click="handleRegister">注册</button>
+            <p @click="mySwitch">已有账号?去登录</p>
+          </div>
         </div>
         <!-- 登录盒子 -->
         <div class="login-form">
@@ -46,20 +46,24 @@
 <script>
 import waoku from '@/assets/waoku.jpg'
 import wuwu from '@/assets/wuwu.jpeg'
-import { loginApi } from '@/api/user'
+import { loginApi, registerApi } from '@/api/user'
 
 export default {
   name: 'App',
   data() {
-    return {
-      flag: true,
-      loginForm: {
-        username: '',
-        password: ''
-        // role 字段已移除
-      }
-    };
-  },
+  return {
+    flag: true,
+    loginForm: {
+      username: '',
+      password: ''
+    },
+    registerForm: {
+      username: '',
+      password: '',
+      confirmPassword: ''
+    }
+  };
+},
   computed: {
     preBoxStyle() {
       return {
@@ -83,6 +87,26 @@ export default {
         this.$router.push('/findroom')
       } catch (err) {
         alert(err.response?.data?.message || '登录失败')
+      }
+    },
+    async handleRegister() {
+      if (!this.registerForm.username || !this.registerForm.password) {
+        alert('用户名和密码不能为空')
+        return
+      }
+      if (this.registerForm.password !== this.registerForm.confirmPassword) {
+        alert('两次输入的密码不一致')
+        return
+      }
+      try {
+        const res = await registerApi({
+          username: this.registerForm.username,
+          password: this.registerForm.password
+        })
+        alert(res.message || '注册成功')
+        this.mySwitch() // 注册成功后切换到登录
+      } catch (err) {
+        alert(err.response?.data?.message || '注册失败')
       }
     },
     bubleCreate() {

@@ -30,4 +30,35 @@ public class UserController {
         result.put("message", "登录成功");
         return result;
     }
+
+    @PostMapping("/register")
+    public Map<String, Object> register(@RequestBody Map<String, String> params) {
+        String username = params.get("username");
+        String password = params.get("password");
+        Map<String, Object> result = new HashMap<>();
+        if (username == null || password == null) {
+            result.put("message", "用户名和密码不能为空");
+            return result;
+        }
+        // 检查用户名是否已存在
+        Customer exist = userService.findByUsername(username);
+        if (exist != null) {
+            result.put("message", "用户名已存在");
+            return result;
+        }
+        // 注册时email等字段给默认值
+        Customer user = new Customer();
+        user.setUsername(username);
+        user.setPassword(password);
+        user.setEmail(username + "@example.com"); // 随便给个默认邮箱
+        user.setPhone("");
+        user.setGender(0);
+        user.setCreateTime("");
+        user.setPoints(0);
+        user.setStatus(0);
+        // 保存到数据库
+        userService.save(user);
+        result.put("message", "注册成功");
+        return result;
+    }
 }

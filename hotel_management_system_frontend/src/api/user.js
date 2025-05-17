@@ -12,3 +12,7 @@ axios.interceptors.request.use(config => {
 export function loginApi(data) {
   return axios.post('/api/user/login', data).then(res => res.data)
 }
+
+export function registerApi(data) {
+  return axios.post('/api/user/register', data).then(res => res.data)
+}

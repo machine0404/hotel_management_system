@@ -16,4 +16,9 @@ public class UserService {
         return jdbcTemplate.query(sql, new CustomerMapper(), username)
                 .stream().findFirst().orElse(null);
     }
+
+    public void save(Customer user) {
+        String sql = "INSERT INTO customer (username, password, email, phone, gender, create_time, points, status) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)";
+        jdbcTemplate.update(sql, user.getUsername(), user.getPassword(), user.getEmail(), user.getPhone(), user.getGender(), user.getPoints(), user.getStatus());
+    }
 }
