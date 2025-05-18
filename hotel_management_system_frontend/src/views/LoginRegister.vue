@@ -12,18 +12,18 @@
         </div>
         <!-- 注册盒子 -->
         <div class="register-form">
-            <div class="title-box">
-                <h1>注册</h1>
-            </div>
-            <div class="input-box">
-                <input type="text" placeholder="用户名">
-                <input type="password" placeholder="密码">
-                <input type="password" placeholder="确认密码">
-            </div>
-            <div class="btn-box">
-                <button>注册</button>
-                <p @click="mySwitch">已有账号?去登录</p>
-            </div>
+          <div class="title-box">
+            <h1>注册</h1>
+          </div>
+          <div class="input-box">
+            <input type="text" placeholder="用户名" v-model="registerForm.username">
+            <input type="password" placeholder="密码" v-model="registerForm.password">
+            <input type="password" placeholder="确认密码" v-model="registerForm.confirmPassword">
+          </div>
+          <div class="btn-box">
+            <button @click="handleRegister">注册</button>
+            <p @click="mySwitch">已有账号?去登录</p>
+          </div>
         </div>
         <!-- 登录盒子 -->
         <div class="login-form">
@@ -46,19 +46,24 @@
 <script>
 import waoku from '@/assets/waoku.jpg'
 import wuwu from '@/assets/wuwu.jpeg'
-import { loginApi } from '@/api/user'
+import { loginApi, registerApi } from '@/api/user'
 
 export default {
   name: 'App',
   data() {
-    return {
-      flag: true,
-      loginForm: {
-        username: '',
-        password: ''
-      }
-    };
-  },
+  return {
+    flag: true,
+    loginForm: {
+      username: '',
+      password: ''
+    },
+    registerForm: {
+      username: '',
+      password: '',
+      confirmPassword: ''
+    }
+  };
+},
   computed: {
     preBoxStyle() {
       return {
@@ -76,21 +81,41 @@ export default {
     },
     async handleLogin() {
       try {
-        await loginApi(this.loginForm)
+        const res = await loginApi(this.loginForm)
+        // 保存 token 到本地
+        localStorage.setItem('token', res.token)
         this.$router.push('/findroom')
       } catch (err) {
         alert(err.response?.data?.message || '登录失败')
       }
     },
+    async handleRegister() {
+      if (!this.registerForm.username || !this.registerForm.password) {
+        alert('用户名和密码不能为空')
+        return
+      }
+      if (this.registerForm.password !== this.registerForm.confirmPassword) {
+        alert('两次输入的密码不一致')
+        return
+      }
+      try {
+        const res = await registerApi({
+          username: this.registerForm.username,
+          password: this.registerForm.password
+        })
+        alert(res.message || '注册成功')
+        this.mySwitch() // 注册成功后切换到登录
+      } catch (err) {
+        alert(err.response?.data?.message || '注册失败')
+      }
+    },
     bubleCreate() {
-      // 让泡泡生成在 .bubble-container 下
       const container = this.$el.querySelector('.bubble-container');
       const buble = document.createElement('span');
       let r = Math.random() * 5 + 25;
       buble.style.width = r + 'px';
       buble.style.height = r + 'px';
       buble.style.left = Math.random() * this.$el.offsetWidth + 'px';
-      // 兼容 scoped 样式
       const scopeId = this.$el.getAttributeNames().find(name => name.startsWith('data-v-'));
       if (scopeId) {
         buble.setAttribute(scopeId, '');
@@ -283,6 +308,10 @@ input:focus {
 
 input:focus::placeholder {
     opacity: 0;
+}
+
+input::placeholder {
+    color: #bdbdbd;
 }
 
 /* 按钮盒子 */
