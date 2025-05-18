@@ -2,6 +2,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import LoginRegister from '../views/LoginRegister.vue'
 import FindRoom from '../views/findroom.vue' // 新增
+import AdminLogin from '../views/AdminLogin.vue'
 
 const routes = [
   {
@@ -13,6 +14,11 @@ const routes = [
     path: '/findroom',
     name: 'FindRoom',
     component: FindRoom
+  },
+  {
+    path: '/admin/login',
+    name: 'AdminLogin',
+    component: AdminLogin
   }
 ]
 

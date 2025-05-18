@@ -40,6 +40,8 @@
             </div>
         </div>
     </div>
+    <!-- 右下角按钮 -->
+    <button class="switch-admin-btn" @click="goAdminLogin">管理员登录</button>
   </div>
 </template>
 
@@ -124,6 +126,9 @@ export default {
       setTimeout(() => {
         buble.remove();
       }, 4000);
+    },
+    goAdminLogin() {
+      this.$router.push('/admin/login')
     }
   },
   mounted() {
@@ -350,5 +355,30 @@ button:hover {
 .btn-box p:hover {
     cursor: pointer;
     border-bottom: 1px solid white;
+}
+
+/* 管理员登录按钮 */
+.switch-admin-btn {
+  position: fixed;
+  right: 40px;
+  bottom: 40px;
+  z-index: 100;
+  background: #69b3f0;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 22px;         /* 缩小内边距 */
+  font-size: 14px;            /* 字体变小 */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  transition: background .2s;
+  white-space: nowrap;
+  display: flex;              /* 新增：flex布局 */
+  align-items: center;        /* 垂直居中 */
+  justify-content: center;    /* 水平居中 */
+}
+
+.switch-admin-btn:hover {
+  background: #3a8ee6;
+  cursor: pointer;
 }
 </style>
