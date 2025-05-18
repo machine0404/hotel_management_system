@@ -61,7 +61,7 @@ export default {
         const res = await loginApi(this.loginForm)
         localStorage.setItem('admin_token', res.token)
         alert(res.message || '登录成功')
-        this.$router.push('/findroom')
+        this.$router.push('/admin/user-list')
       } catch (err) {
         alert(err.response?.data?.message || '登录失败')
       }

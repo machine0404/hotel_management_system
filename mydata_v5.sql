@@ -63,7 +63,7 @@ CREATE TABLE "booking" (
   "real_amount" NUMBER(10,2) DEFAULT NULL,
   "adults" INT DEFAULT 1,
   "invoice_needed" INT DEFAULT 0 COMMENT '0-不需要，1-需要',
-  "status" INT DEFAULT 0 COMMENT '0-未处理，1-已入住，2-退订，3-已完成',
+  "status" INT DEFAULT 0 COMMENT '0-未处理，1-已接受,2-已取消',
   PRIMARY KEY ("id")
 );
 
