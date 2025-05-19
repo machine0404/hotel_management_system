@@ -21,6 +21,9 @@
           <el-option label="已消费" :value="1" />
         </el-select>
       </el-form-item>
+      <el-form-item label="创建时间">
+        <el-input v-model="user.create_time" disabled />
+      </el-form-item>
       <el-form-item>
         <el-button type="primary" :disabled="!user" @click="updateUser">确认修改</el-button>
       </el-form-item>

@@ -89,7 +89,7 @@ public class AdminController {
 
     @GetMapping("/user/{id}")
     public Map<String, Object> getUserById(@PathVariable Integer id) {
-        String sql = "SELECT id, create_time, email, username, gender, phone, points, status FROM customer WHERE id = ?";
+        String sql = "SELECT id, create_time, email, username, password, gender, phone, points, status FROM customer WHERE id = ?";
         List<Map<String, Object>> list = jdbcTemplate.queryForList(sql, id);
         return list.isEmpty() ? null : list.get(0);
     }
