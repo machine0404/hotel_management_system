@@ -6,9 +6,13 @@
     <el-form v-if="room" :model="room" label-width="100px" style="margin-top: 20px;">
       <el-form-item label="房间号"><el-input v-model="room.room_number" /></el-form-item>
       <el-form-item label="房间类别">
-        <el-select v-model="room.type_id">
-          <el-option label="单人房" :value="1" />
-          <el-option label="双人房" :value="2" />
+        <el-select v-model="room.type_id" placeholder="请选择房间类型">
+          <el-option
+            v-for="type in roomTypes"
+            :key="type.id"
+            :label="type.name"
+            :value="type.id"
+          />
         </el-select>
       </el-form-item>
       <el-form-item label="房间状态">
@@ -40,11 +44,18 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import axios from 'axios'
 const queryRoomId = ref('')
 const room = ref(null)
 const queryFail = ref(false)
+
+// 新增：房间类型列表
+const roomTypes = ref([])
+onMounted(async () => {
+  const res = await axios.get('/api/admin/room-type-list')
+  roomTypes.value = res.data
+})
 
 function parseIntroduce(introduce) {
   // 解析introduce字符串为detail数组和area

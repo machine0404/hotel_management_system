@@ -64,6 +64,13 @@ public class AdminController {
         return jdbcTemplate.queryForList(sql);
     }
 
+    // 获取所有房间类型
+    @GetMapping("/room-type-list")
+    public List<Map<String, Object>> roomTypeList() {
+        String sql = "SELECT id, name FROM room_type";
+        return jdbcTemplate.queryForList(sql);
+    }
+
     // 添加房间
     @PostMapping("/room-add")
     public Map<String, Object> addRoom(@RequestBody Map<String, Object> params) {

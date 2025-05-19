@@ -1,7 +1,15 @@
 // src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router'
 import LoginRegister from '../views/LoginRegister.vue'
-import FindRoom from '../views/findroom.vue' // 新增
+import ClientLayout from '../views/client/ClientLayout.vue'
+import FindRoom from '../views/client/FindRoom.vue'
+import RoomDetail from '../views/client/RoomDetail.vue'
+import BookRoom from '../views/client/BookRoom.vue'
+import UserCenter from '../views/client/UserCenter.vue'
+import MyOrders from '../views/client/MyOrders.vue'
+import MyInfo from '../views/client/MyInfo.vue'
+import ChangePassword from '../views/client/ChangePassword.vue'
+import SearchResult from '../views/client/SearchResult.vue'
 import AdminLogin from '../views/AdminLogin.vue'
 import AdminLayout from '../views/admin/AdminLayout.vue'
 import AdminUserList from '../views/admin/AdminUserList.vue'
@@ -20,9 +28,19 @@ const routes = [
     component: LoginRegister
   },
   {
-    path: '/findroom',
-    name: 'FindRoom',
-    component: FindRoom
+    path: '/client',
+    component: ClientLayout,
+    children: [
+      { path: '', redirect: '/client/find-room' },
+      { path: 'find-room', component: FindRoom },
+      { path: 'room-detail/:id', component: RoomDetail },
+      { path: 'book-room', component: BookRoom },
+      { path: 'user-center', component: UserCenter },
+      { path: 'my-orders', component: MyOrders },
+      { path: 'my-info', component: MyInfo },
+      { path: 'change-password', component: ChangePassword },
+      { path: 'search-result', component: SearchResult }
+    ]
   },
   {
     path: '/admin/login',
@@ -43,6 +61,14 @@ const routes = [
       { path: 'room-add', component: AdminRoomAdd },
       { path: 'room-edit', component: AdminRoomEdit }
     ]
+  },
+  {
+    path: '/client/room-detail/:id',
+    component: () => import('@/views/client/RoomDetail.vue')
+  },
+  {
+    path: '/client/my-info',
+    component: () => import('@/views/client/MyInfo.vue')
   }
 ]
 
@@ -58,6 +84,10 @@ router.beforeEach((to, from, next) => {
     if (!token) {
       return next('/admin/login')
     }
+  }
+  if (to.path.startsWith('/client')) {
+    const token = localStorage.getItem('token')
+    if (!token) return next('/')
   }
   next()
 })

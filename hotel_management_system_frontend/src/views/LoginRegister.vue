@@ -86,7 +86,7 @@ export default {
         const res = await loginApi(this.loginForm)
         // 保存 token 到本地
         localStorage.setItem('token', res.token)
-        this.$router.push('/findroom')
+        this.$router.push('/client/find-room') // 登录成功后跳转
       } catch (err) {
         alert(err.response?.data?.message || '登录失败')
       }
