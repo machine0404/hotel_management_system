@@ -8,16 +8,16 @@ import java.sql.SQLException;
 public class CustomerMapper implements RowMapper<Customer> {
     @Override
     public Customer mapRow(ResultSet rs, int rowNum) throws SQLException {
-        Customer c = new Customer();
-        c.setId(rs.getInt("id"));
-        c.setUsername(rs.getString("username"));
-        c.setPassword(rs.getString("password"));
-        c.setEmail(rs.getString("email"));
-        c.setPhone(rs.getString("phone"));
-        c.setGender(rs.getInt("gender"));
-        c.setCreateTime(rs.getString("create_time"));
-        c.setPoints(rs.getInt("points"));
-        c.setStatus(rs.getInt("status"));
-        return c;
+        Customer customer = new Customer();
+        customer.setId(rs.getInt("id"));
+        customer.setUsername(rs.getString("username"));
+        customer.setPassword(rs.getString("password"));
+        customer.setEmail(rs.getString("email"));
+        customer.setPhone(rs.getString("phone"));
+        customer.setGender(rs.getInt("gender"));
+        customer.setCreateTime(rs.getTimestamp("create_time")); // 修正
+        customer.setPoints(rs.getInt("points"));
+        customer.setStatus(rs.getInt("status"));
+        return customer;
     }
 }

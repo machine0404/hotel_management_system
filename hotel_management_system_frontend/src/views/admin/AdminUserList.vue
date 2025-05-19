@@ -8,7 +8,7 @@
       <el-table-column prop="phone" label="手机号码" width="120" />
       <el-table-column prop="points" label="积分" width="80" />
       <el-table-column prop="status" label="状态" width="80" :formatter="statusFormat" />
-      <el-table-column prop="create_time" label="创建时间" width="200" :formatter="timeFormat" />
+      <el-table-column prop="create_time" label="创建时间" :formatter="formatTime" />
       <el-table-column label="操作" width="100">
         <template #default="scope">
           <el-button type="danger" size="small" @click="deleteUser(scope.row)">删除</el-button>
@@ -32,8 +32,11 @@ function genderFormat(row) {
 function statusFormat(row) {
   return row.status === 1 ? '已消费' : '未消费'
 }
-function timeFormat(row) {
-  return row.create_time?.replace('T', ' ').substring(0, 19)
+function formatTime(row) {
+  if (!row.create_time) return ''
+  // 如果是时间戳，转为日期字符串
+  const date = new Date(row.create_time)
+  return date.toLocaleString()
 }
 async function deleteUser(row) {
   if (confirm('确定要删除该用户吗？')) {

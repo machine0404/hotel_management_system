@@ -1,20 +1,17 @@
 package com.example.hotel_management_system_backend.entity;
 
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
+import java.util.Date;
 
 @Data
-@TableName("customer")
 public class Customer {
-    @TableId
     private Integer id;
     private String username;
     private String password;
     private String email;
     private String phone;
-    private Integer gender;
-    private String createTime;
+    private Integer gender; // 0-女，1-男
+    private Date createTime;
     private Integer points;
-    private Integer status;
+    private Integer status; // 0-未消费，1-已消费
 }

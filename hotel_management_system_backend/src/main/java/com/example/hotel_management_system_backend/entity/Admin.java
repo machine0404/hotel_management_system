@@ -1,6 +1,7 @@
 package com.example.hotel_management_system_backend.entity;
 
 import lombok.Data;
+import java.util.Date;
 
 @Data
 public class Admin {
@@ -9,6 +10,6 @@ public class Admin {
     private String password;
     private String email;
     private String phone;
-    private String createTime;
+    private Date createTime;
     private String realName;
 }

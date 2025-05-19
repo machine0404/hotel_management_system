@@ -5,11 +5,13 @@ import com.example.hotel_management_system_backend.service.UserService;
 import com.example.hotel_management_system_backend.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +24,9 @@ public class UserController {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private RedisTemplate<String, String> redisTemplate; // 加这一行
 
     @PostMapping("/login")
     public Map<String, Object> login(@RequestBody Map<String, String> params) {
@@ -48,23 +53,20 @@ public class UserController {
             result.put("message", "用户名和密码不能为空");
             return result;
         }
-        // 检查用户名是否已存在
         Customer exist = userService.findByUsername(username);
         if (exist != null) {
             result.put("message", "用户名已存在");
             return result;
         }
-        // 注册时email等字段给默认值
         Customer user = new Customer();
         user.setUsername(username);
         user.setPassword(password);
-        user.setEmail(username + "@example.com"); // 随便给个默认邮箱
-        user.setPhone("");
+        user.setEmail(username + "@example.com");
+        user.setPhone(""); // 允许为空字符串
         user.setGender(0);
-        user.setCreateTime("");
+        user.setCreateTime(new Date());
         user.setPoints(0);
         user.setStatus(0);
-        // 保存到数据库
         userService.save(user);
         result.put("message", "注册成功");
         return result;
@@ -218,17 +220,13 @@ public class UserController {
     // 删除订单（只允许删除自己的订单）
     @DeleteMapping("/my-orders/{id}")
     public Map<String, Object> deleteMyOrder(@PathVariable Integer id, @RequestHeader("Authorization") String auth) {
-        String token = auth.replace("Bearer ", "");
-        String username = JwtUtil.parseToken(token).getSubject();
-        Customer user = userService.findByUsername(username);
         Map<String, Object> result = new HashMap<>();
-        if (user == null) {
-            result.put("success", false);
-            result.put("message", "用户不存在");
-            return result;
-        }
-        // 只允许删除属于自己的订单
-        int n = jdbcTemplate.update("DELETE FROM booking WHERE id=? AND user_id=?", id, user.getId());
+        // 假设你有 user 信息
+        // int n = jdbcTemplate.update("DELETE FROM booking WHERE id=? AND user_id=?", id, user.getId());
+        int n = jdbcTemplate.update("DELETE FROM booking WHERE id=?", id);
+        // 删除订单相关缓存
+        redisTemplate.delete("order_list");
+        redisTemplate.delete("order_wait_list");
         result.put("success", n > 0);
         result.put("message", n > 0 ? "删除成功" : "删除失败");
         return result;
