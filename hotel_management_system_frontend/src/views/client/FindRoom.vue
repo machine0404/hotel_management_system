@@ -28,7 +28,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import axios from '@/api/user'
 import { useRouter } from 'vue-router'
 const router = useRouter()
 const searchForm = ref({

@@ -45,7 +45,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import axios from '@/api/admin'
 const queryRoomId = ref('')
 const room = ref(null)
 const queryFail = ref(false)
@@ -57,8 +57,8 @@ onMounted(async () => {
   roomTypes.value = res.data
 })
 
+// 解析introduce字符串为detail数组和area
 function parseIntroduce(introduce) {
-  // 解析introduce字符串为detail数组和area
   const detail = []
   let area = ''
   if (introduce) {
@@ -78,17 +78,18 @@ function parseIntroduce(introduce) {
 async function queryRoom() {
   try {
     const res = await axios.get(`/api/admin/room/${queryRoomId.value}`)
-    if (res.data) {
-      const { detail, area } = parseIntroduce(res.data.introduce)
+    if (res.data && res.data.data) {
+      const roomData = res.data.data
+      const { detail, area } = parseIntroduce(roomData.introduce)
       room.value = {
-        id: res.data.id,
-        room_number: res.data.room_number,
-        type_id: res.data.type_id,
-        status: res.data.status,
-        max_people: res.data.max_people,
+        id: roomData.id,
+        room_number: roomData.room_number,
+        type_id: roomData.type_id,
+        status: roomData.status,
+        max_people: roomData.max_people,
         detail,
         area,
-        introduce: res.data.introduce
+        introduce: roomData.introduce
       }
       queryFail.value = false
     } else {

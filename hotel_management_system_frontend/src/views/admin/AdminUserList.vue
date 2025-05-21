@@ -19,7 +19,7 @@
 </template>
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import axios from '@/api/admin'
 const users = ref([])
 async function loadUsers() {
   const res = await axios.get('/api/admin/user-list')

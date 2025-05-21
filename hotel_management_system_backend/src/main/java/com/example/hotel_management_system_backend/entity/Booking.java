@@ -6,14 +6,18 @@ import java.util.Date;
 @Data
 public class Booking {
     private Integer id;
-    private Integer userId;
-    private Integer roomId;
-    private Date checkInDate;
-    private Date checkOutDate;
-    private Date createTime;
-    private Double totalAmount;
-    private Double realAmount;
+    private Integer user_id;
+    private Integer room_id;
+    private Date check_in_date;
+    private Date check_out_date;
+    private Date create_time;
+    private Double total_amount;
+    private Double real_amount;
     private Integer adults;
-    private Integer invoiceNeeded; // 0-不需要，1-需要
-    private Integer status; // 0-未处理，1-已接受,2-已取消
+    private Integer invoice_needed;
+    private Integer status;
+
+    // 扩展字段
+    private String type_name;
+    private String user_name;
 }

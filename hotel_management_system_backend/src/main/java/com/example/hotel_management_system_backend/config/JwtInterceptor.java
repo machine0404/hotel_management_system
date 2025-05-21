@@ -14,7 +14,7 @@ public class JwtInterceptor implements HandlerInterceptor {
         if (token != null && token.startsWith("Bearer ")) {
             token = token.substring(7);
             try {
-                JwtUtil.parseToken(token); // 你需要在JwtUtil.java里实现parseToken方法
+                JwtUtil.parseToken(token);
                 return true;
             } catch (Exception e) {
                 response.setStatus(401);

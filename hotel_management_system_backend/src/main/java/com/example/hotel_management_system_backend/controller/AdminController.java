@@ -1,18 +1,16 @@
 package com.example.hotel_management_system_backend.controller;
 
 import com.example.hotel_management_system_backend.entity.Admin;
+import com.example.hotel_management_system_backend.entity.Booking;
+import com.example.hotel_management_system_backend.entity.Customer;
+import com.example.hotel_management_system_backend.entity.Room;
+import com.example.hotel_management_system_backend.entity.RoomType;
 import com.example.hotel_management_system_backend.service.AdminService;
 import com.example.hotel_management_system_backend.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.HashMap;
+
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -20,284 +18,140 @@ public class AdminController {
     @Autowired
     private AdminService adminService;
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
-
-    @Autowired
-    private StringRedisTemplate redisTemplate;
-
-    private static final ObjectMapper objectMapper = new ObjectMapper();
-    private static final String USER_LIST_KEY = "user_list";
-    private static final String ORDER_LIST_KEY = "order_list";
-    private static final String ORDER_WAIT_LIST_KEY = "order_wait_list";
-    private static final String ROOM_LIST_KEY = "room_list";
-    private static final String ROOM_TYPE_LIST_KEY = "room_type_list";
-
     @PostMapping("/login")
-    public Map<String, Object> login(@RequestBody Map<String, String> params) {
-        String username = params.get("username");
-        String password = params.get("password");
-        Map<String, Object> result = new HashMap<>();
+    public LoginResponse login(@RequestBody Admin param) {
+        String username = param.getUsername();
+        String password = param.getPassword();
         Admin admin = adminService.findByUsername(username);
         if (admin == null || !admin.getPassword().equals(password)) {
-            result.put("message", "用户名或密码错误");
-            throw new RuntimeException("用户名或密码错误");
+            return new LoginResponse(null, "用户名或密码错误");
         }
         String token = JwtUtil.generateToken(username);
-        result.put("token", token);
-        result.put("message", "登录成功");
-        return result;
+        return new LoginResponse(token, "登录成功");
     }
 
-    // 获取所有用户（带缓存）
     @GetMapping("/user-list")
-    public List<Map<String, Object>> userList() {
-        String json = redisTemplate.opsForValue().get(USER_LIST_KEY);
-        if (json != null) {
-            try {
-                return objectMapper.readValue(json, new TypeReference<List<Map<String, Object>>>() {});
-            } catch (Exception ignored) {}
-        }
-        // 字段名全部用下划线风格，和前端一致
-        String sql = "SELECT id, username, email, gender, phone, points, status, create_time FROM customer";
-        List<Map<String, Object>> list = jdbcTemplate.queryForList(sql);
-        // 只缓存非空数据
-        if (list != null && !list.isEmpty()) {
-            try {
-                redisTemplate.opsForValue().set(USER_LIST_KEY, objectMapper.writeValueAsString(list), 10, TimeUnit.MINUTES);
-            } catch (Exception ignored) {}
-        }
-        return list;
+    public List<Customer> userList() {
+        return adminService.getUserList();
     }
 
-    // 获取所有未处理订单（带缓存）
-    @GetMapping("/order-wait")
-    public List<Map<String, Object>> orderWaitList() {
-        String json = redisTemplate.opsForValue().get(ORDER_WAIT_LIST_KEY);
-        if (json != null) {
-            try {
-                return objectMapper.readValue(json, new TypeReference<List<Map<String, Object>>>() {});
-            } catch (Exception ignored) {}
-        }
-        String sql = "SELECT * FROM booking WHERE status = 0";
-        List<Map<String, Object>> list = jdbcTemplate.queryForList(sql);
-        if (list != null && !list.isEmpty()) {
-            try {
-                redisTemplate.opsForValue().set(ORDER_WAIT_LIST_KEY, objectMapper.writeValueAsString(list), 10, TimeUnit.MINUTES);
-            } catch (Exception ignored) {}
-        }
-        return list;
-    }
-
-    // 获取所有订单（带缓存）
     @GetMapping("/order-list")
-    public List<Map<String, Object>> orderList() {
-        String json = redisTemplate.opsForValue().get(ORDER_LIST_KEY);
-        if (json != null) {
-            try {
-                return objectMapper.readValue(json, new TypeReference<List<Map<String, Object>>>() {});
-            } catch (Exception ignored) {}
-        }
-        String sql = "SELECT * FROM booking";
-        List<Map<String, Object>> list = jdbcTemplate.queryForList(sql);
-        if (list != null && !list.isEmpty()) {
-            try {
-                redisTemplate.opsForValue().set(ORDER_LIST_KEY, objectMapper.writeValueAsString(list), 10, TimeUnit.MINUTES);
-            } catch (Exception ignored) {}
-        }
-        return list;
+    public List<Booking> orderList() {
+        return adminService.getOrderList();
     }
 
-    // 获取所有房间，带类型名称（带缓存）
+    @GetMapping("/order-wait")
+    public List<Booking> orderWaitList() {
+        return adminService.getOrderWaitList();
+    }
+
     @GetMapping("/room-list")
-    public List<Map<String, Object>> roomList() {
-        String json = redisTemplate.opsForValue().get(ROOM_LIST_KEY);
-        if (json != null) {
-            try {
-                return objectMapper.readValue(json, new TypeReference<List<Map<String, Object>>>() {});
-            } catch (Exception ignored) {}
-        }
-        String sql = "SELECT r.*, t.name AS type_name FROM room r LEFT JOIN room_type t ON r.type_id = t.id";
-        List<Map<String, Object>> list = jdbcTemplate.queryForList(sql);
-        if (list != null && !list.isEmpty()) {
-            try {
-                redisTemplate.opsForValue().set(ROOM_LIST_KEY, objectMapper.writeValueAsString(list), 10, TimeUnit.MINUTES);
-            } catch (Exception ignored) {}
-        }
-        return list;
+    public List<Room> roomList() {
+        return adminService.getRoomList();
     }
 
-    // 获取所有房间类型（带缓存）
     @GetMapping("/room-type-list")
-    public List<Map<String, Object>> roomTypeList() {
-        String json = redisTemplate.opsForValue().get(ROOM_TYPE_LIST_KEY);
-        if (json != null) {
-            try {
-                return objectMapper.readValue(json, new TypeReference<List<Map<String, Object>>>() {});
-            } catch (Exception ignored) {}
-        }
-        String sql = "SELECT id, name FROM room_type";
-        List<Map<String, Object>> list = jdbcTemplate.queryForList(sql);
-        if (list != null && !list.isEmpty()) {
-            try {
-                redisTemplate.opsForValue().set(ROOM_TYPE_LIST_KEY, objectMapper.writeValueAsString(list), 10, TimeUnit.MINUTES);
-            } catch (Exception ignored) {}
-        }
-        return list;
-    }
-
-    // 添加房间（清理房间列表缓存）
-    @PostMapping("/room-add")
-    public Map<String, Object> addRoom(@RequestBody Map<String, Object> params) {
-        Map<String, Object> result = new HashMap<>();
-        String sql = "INSERT INTO room (room_number, type_id, status, max_people, introduce) VALUES (?, ?, ?, ?, ?)";
-        int n = jdbcTemplate.update(sql,
-            params.get("room_number"),
-            params.get("type_id"),
-            params.get("status"),
-            params.get("max_people"),
-            params.get("introduce")
-        );
-        redisTemplate.delete(ROOM_LIST_KEY);
-        result.put("success", n > 0);
-        return result;
-    }
-
-    // 删除房间（清理房间列表缓存）
-    @DeleteMapping("/room/{id}")
-    public Map<String, Object> deleteRoom(@PathVariable Integer id) {
-        int n = jdbcTemplate.update("DELETE FROM room WHERE id = ?", id);
-        redisTemplate.delete(ROOM_LIST_KEY);
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", n > 0);
-        return result;
-    }
-
-    // 修改房间（清理房间列表缓存）
-    @PutMapping("/room/{id}")
-    public Map<String, Object> updateRoom(@PathVariable Integer id, @RequestBody Map<String, Object> params) {
-        String sql = "UPDATE room SET room_number=?, type_id=?, status=?, max_people=?, introduce=? WHERE id=?";
-        int n = jdbcTemplate.update(sql,
-            params.get("room_number"),
-            params.get("type_id"),
-            params.get("status"),
-            params.get("max_people"),
-            params.get("introduce"),
-            id
-        );
-        redisTemplate.delete(ROOM_LIST_KEY);
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", n > 0);
-        return result;
-    }
-
-    // 添加房型（清理房型列表缓存）
-    @PostMapping("/room-type-add")
-    public Map<String, Object> addRoomType(@RequestBody Map<String, Object> params) {
-        String sql = "INSERT INTO room_type (name, price, description, feature, cover_image) VALUES (?, ?, ?, ?, ?)";
-        int n = jdbcTemplate.update(sql,
-            params.get("name"),
-            params.get("price"),
-            params.get("description"),
-            params.get("feature"),
-            params.get("cover_image")
-        );
-        redisTemplate.delete(ROOM_TYPE_LIST_KEY);
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", n > 0);
-        return result;
-    }
-
-    // 修改房型（清理房型列表缓存）
-    @PutMapping("/room-type/{id}")
-    public Map<String, Object> updateRoomType(@PathVariable Integer id, @RequestBody Map<String, Object> params) {
-        String sql = "UPDATE room_type SET name=?, price=?, description=?, feature=?, cover_image=? WHERE id=?";
-        int n = jdbcTemplate.update(sql,
-            params.get("name"),
-            params.get("price"),
-            params.get("description"),
-            params.get("feature"),
-            params.get("cover_image"),
-            id
-        );
-        redisTemplate.delete(ROOM_TYPE_LIST_KEY);
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", n > 0);
-        return result;
-    }
-
-    // 删除房型（清理房型列表缓存）
-    @DeleteMapping("/room-type/{id}")
-    public Map<String, Object> deleteRoomType(@PathVariable Integer id) {
-        int n = jdbcTemplate.update("DELETE FROM room_type WHERE id = ?", id);
-        redisTemplate.delete(ROOM_TYPE_LIST_KEY);
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", n > 0);
-        return result;
-    }
-
-    // 用户相关变更操作后清理用户列表缓存
-    @PutMapping("/user/{id}")
-    public Map<String, Object> updateUser(@PathVariable Integer id, @RequestBody Map<String, Object> params) {
-        String sql = "UPDATE customer SET username=?, password=?, points=?, phone=?, email=?, gender=?, status=? WHERE id=?";
-        int n = jdbcTemplate.update(sql,
-            params.get("username"),
-            params.get("password"),
-            params.get("points"),
-            params.get("phone"),
-            params.get("email"),
-            params.get("gender"),
-            params.get("status"),
-            id
-        );
-        redisTemplate.delete(USER_LIST_KEY);
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", n > 0);
-        return result;
+    public List<RoomType> roomTypeList() {
+        return adminService.getRoomTypeList();
     }
 
     @DeleteMapping("/user/{id}")
-    public Map<String, Object> deleteUser(@PathVariable Integer id) {
-        int n = jdbcTemplate.update("DELETE FROM customer WHERE id = ?", id);
-        redisTemplate.delete(USER_LIST_KEY);
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", n > 0);
-        return result;
+    public ApiResponse deleteUser(@PathVariable Integer id) {
+        boolean ok = adminService.deleteUserById(id);
+        return new ApiResponse(ok, ok ? "删除成功" : "删除失败");
     }
 
-    // 订单相关变更操作后清理订单缓存
+    @GetMapping("/user/{id}")
+    public ApiResponse getUserById(@PathVariable Integer id) {
+        Customer user = adminService.getUserById(id);
+        if (user == null) {
+            return new ApiResponse(false, "未查询到用户");
+        }
+        return new ApiResponse(true, "查询成功", user);
+    }
+
     @PostMapping("/order/{id}/accept")
-    public Map<String, Object> acceptOrder(@PathVariable Integer id) {
-        int n = jdbcTemplate.update("UPDATE booking SET status = 1 WHERE id = ?", id);
-        redisTemplate.delete(ORDER_LIST_KEY);
-        redisTemplate.delete(ORDER_WAIT_LIST_KEY);
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", n > 0);
-        return result;
+    public ApiResponse acceptOrder(@PathVariable Integer id) {
+        boolean ok = adminService.acceptOrder(id);
+        return new ApiResponse(ok, ok ? "操作成功" : "操作失败");
     }
 
     @PostMapping("/order/{id}/cancel")
-    public Map<String, Object> cancelOrder(@PathVariable Integer id) {
-        int n = jdbcTemplate.update("UPDATE booking SET status = 2 WHERE id = ?", id);
-        redisTemplate.delete(ORDER_LIST_KEY);
-        redisTemplate.delete(ORDER_WAIT_LIST_KEY);
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", n > 0);
-        return result;
+    public ApiResponse cancelOrder(@PathVariable Integer id) {
+        boolean ok = adminService.cancelOrder(id);
+        return new ApiResponse(ok, ok ? "操作成功" : "操作失败");
     }
 
-    // 其它接口保持不变
-    @GetMapping("/user/{id}")
-    public Map<String, Object> getUserById(@PathVariable Integer id) {
-        String sql = "SELECT id, create_time, email, username, password, gender, phone, points, status FROM customer WHERE id = ?";
-        List<Map<String, Object>> list = jdbcTemplate.queryForList(sql, id);
-        return list.isEmpty() ? null : list.get(0);
+    @PutMapping("/user/{id}")
+    public ApiResponse updateUser(@PathVariable Integer id, @RequestBody Customer param) {
+        boolean ok = adminService.updateUser(id, param);
+        return new ApiResponse(ok, ok ? "修改成功" : "修改失败");
+    }
+
+    @DeleteMapping("/room/{id}")
+    public ApiResponse deleteRoom(@PathVariable Integer id) {
+        boolean ok = adminService.deleteRoomById(id);
+        return new ApiResponse(ok, ok ? "删除成功" : "删除失败");
     }
 
     @GetMapping("/room/{id}")
-    public Map<String, Object> getRoomById(@PathVariable Integer id) {
-        String sql = "SELECT r.*, t.name AS type_name, t.price, t.description FROM room r LEFT JOIN room_type t ON r.type_id = t.id WHERE r.id = ?";
-        List<Map<String, Object>> list = jdbcTemplate.queryForList(sql, id);
-        return list.isEmpty() ? null : list.get(0);
+    public ApiResponse getRoomById(@PathVariable Integer id) {
+        Room room = adminService.getRoomById(id);
+        if (room == null) {
+            return new ApiResponse(false, "未查询到房间");
+        }
+        return new ApiResponse(true, "查询成功", room);
+    }
+
+    @PostMapping("/room-add")
+    public ApiResponse addRoom(@RequestBody Room param) {
+        boolean ok = adminService.addRoom(param);
+        return new ApiResponse(ok, ok ? "添加成功" : "添加失败");
+    }
+
+    @PutMapping("/room/{id}")
+    public ApiResponse updateRoom(@PathVariable Integer id, @RequestBody Room param) {
+        boolean ok = adminService.updateRoom(id, param);
+        return new ApiResponse(ok, ok ? "修改成功" : "修改失败");
+    }
+
+    // 其它增删改查接口同理，参数和返回值都用实体类，所有数据库和缓存操作全部调用AdminService
+    // ...
+
+    public static class LoginResponse {
+        private String token;
+        private String message;
+        public LoginResponse() {}
+        public LoginResponse(String token, String message) {
+            this.token = token;
+            this.message = message;
+        }
+        public String getToken() { return token; }
+        public void setToken(String token) { this.token = token; }
+        public String getMessage() { return message; }
+        public void setMessage(String message) { this.message = message; }
+    }
+
+    // 如果 ApiResponse 没有 data 字段，可以这样定义
+    public static class ApiResponse {
+        private boolean success;
+        private String message;
+        private Object data;
+        public ApiResponse() {}
+        public ApiResponse(boolean success, String message) {
+            this.success = success;
+            this.message = message;
+        }
+        public ApiResponse(boolean success, String message, Object data) {
+            this.success = success;
+            this.message = message;
+            this.data = data;
+        }
+        public boolean isSuccess() { return success; }
+        public void setSuccess(boolean success) { this.success = success; }
+        public String getMessage() { return message; }
+        public void setMessage(String message) { this.message = message; }
+        public Object getData() { return data; }
+        public void setData(Object data) { this.data = data; }
     }
 }

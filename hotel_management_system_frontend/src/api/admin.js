@@ -6,10 +6,10 @@ axios.interceptors.request.use(config => {
     config.headers.Authorization = 'Bearer ' + token
   }
   return config
-})
+}, error => Promise.reject(error))
+
+export default axios
 
 export function loginApi(data) {
   return axios.post('/api/admin/login', data).then(res => res.data)
 }
-
-// 其它管理员相关接口可在这里继续添加

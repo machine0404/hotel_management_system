@@ -59,7 +59,9 @@ export default {
       }
       try {
         const res = await loginApi(this.loginForm)
-        localStorage.setItem('admin_token', res.token)
+        if (res.token) {
+          localStorage.setItem('admin_token', res.token)
+        }
         alert(res.message || '登录成功')
         this.$router.push('/admin/user-list')
       } catch (err) {

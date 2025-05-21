@@ -34,7 +34,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import axios from '@/api/user'
 import dayjs from 'dayjs'
 
 const user = ref({})

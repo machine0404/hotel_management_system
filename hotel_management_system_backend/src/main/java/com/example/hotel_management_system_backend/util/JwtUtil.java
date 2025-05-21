@@ -7,7 +7,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import java.util.Date;
 
 public class JwtUtil {
-    private static final String SECRET_KEY = "your_secret_key"; // 一定要和登录生成token时一致
+    private static final String SECRET_KEY = "your_secret_key"; // 保证和登录生成token时一致
     private static final long EXPIRATION = 86400000; // 1天
 
     public static String generateToken(String username) {
@@ -15,13 +15,13 @@ public class JwtUtil {
                 .setSubject(username)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION))
-                .signWith(SignatureAlgorithm.HS256, SECRET_KEY) // 不要加 getBytes
+                .signWith(SignatureAlgorithm.HS256, SECRET_KEY)
                 .compact();
     }
 
     public static Claims parseToken(String token) {
         return Jwts.parser()
-                .setSigningKey(SECRET_KEY) // 不要加 getBytes
+                .setSigningKey(SECRET_KEY)
                 .parseClaimsJws(token)
                 .getBody();
     }

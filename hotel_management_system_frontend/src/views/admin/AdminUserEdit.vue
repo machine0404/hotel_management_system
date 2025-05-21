@@ -22,7 +22,7 @@
         </el-select>
       </el-form-item>
       <el-form-item label="创建时间">
-        <el-input v-model="user.create_time" disabled />
+        <el-input :value="formatDate(user.create_time)" disabled />
       </el-form-item>
       <el-form-item>
         <el-button type="primary" :disabled="!user" @click="updateUser">确认修改</el-button>
@@ -32,14 +32,15 @@
 </template>
 <script setup>
 import { ref } from 'vue'
-import axios from 'axios'
+import axios from '@/api/admin'
+import dayjs from 'dayjs'
 const queryUserId = ref('')
 const user = ref(null)
 const queryFail = ref(false)
 async function queryUser() {
   try {
     const res = await axios.get(`/api/admin/user/${queryUserId.value}`)
-    user.value = res.data
+    user.value = res.data.data // 只取data字段
     queryFail.value = !user.value
   } catch {
     user.value = null
@@ -51,5 +52,9 @@ async function updateUser() {
   const res = await axios.put(`/api/admin/user/${user.value.id}`, user.value)
   if (res.data.success) alert('修改成功')
   else alert('修改失败')
+}
+function formatDate(val) {
+  if (!val) return ''
+  return dayjs(val).format('YYYY-MM-DD')
 }
 </script>

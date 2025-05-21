@@ -10,6 +10,6 @@ public class Admin {
     private String password;
     private String email;
     private String phone;
-    private Date createTime;
-    private String realName;
+    private Date create_time;
+    private String real_name;
 }

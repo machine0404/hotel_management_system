@@ -17,7 +17,7 @@
 </template>
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import axios from '@/api/admin'
 const rooms = ref([])
 async function loadRooms() {
   const res = await axios.get('/api/admin/room-list')

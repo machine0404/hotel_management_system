@@ -15,7 +15,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import axios from 'axios'
+import axios from '@/api/user'
 const route = useRoute()
 const router = useRouter()
 const rooms = ref([])

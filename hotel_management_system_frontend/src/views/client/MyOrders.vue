@@ -4,9 +4,21 @@
       <el-table-column prop="id" label="订单ID" width="80" />
       <el-table-column prop="room_id" label="房间ID" width="80" />
       <el-table-column prop="type_name" label="房型" width="100" />
-      <el-table-column prop="check_in_date" label="入住时间" width="160" :formatter="formatDate" />
-      <el-table-column prop="check_out_date" label="离店时间" width="160" :formatter="formatDate" />
-      <el-table-column prop="create_time" label="下单时间" width="160" :formatter="formatDate" />
+      <el-table-column prop="check_in_date" label="入住时间" width="160">
+        <template #default="scope">
+          {{ formatDate(scope.row.check_in_date) }}
+        </template>
+      </el-table-column>
+      <el-table-column prop="check_out_date" label="离店时间" width="160">
+        <template #default="scope">
+          {{ formatDate(scope.row.check_out_date) }}
+        </template>
+      </el-table-column>
+      <el-table-column prop="create_time" label="下单时间" width="160">
+        <template #default="scope">
+          {{ formatDate(scope.row.create_time) }}
+        </template>
+      </el-table-column>
       <el-table-column prop="total_amount" label="总价" width="100" />
       <el-table-column prop="adults" label="入住人数" width="80" />
       <el-table-column prop="invoice_needed" label="发票" width="80" :formatter="fapiaoFormat" />
@@ -22,7 +34,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import axios from '@/api/user'
 import dayjs from 'dayjs'
 const orders = ref([])
 async function loadOrders() {
@@ -30,9 +42,11 @@ async function loadOrders() {
   orders.value = res.data
 }
 onMounted(loadOrders)
-function formatDate(row, column, cellValue) {
-  if (!cellValue) return ''
-  return dayjs(cellValue).format('YYYY-MM-DD HH:mm:ss')
+function formatDate(val) {
+  if (!val) return ''
+  const d = dayjs(val)
+  if (!d.isValid()) return ''
+  return d.format('YYYY-MM-DD')
 }
 function statusFormat(row) {
   const map = {0: '未处理', 1: '已接受', 2: '已取消'}

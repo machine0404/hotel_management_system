@@ -37,7 +37,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import axios from 'axios'
+import axios from '@/api/user'
 import { View, Hide } from '@element-plus/icons-vue'
 
 const form = ref({
@@ -59,8 +59,8 @@ async function changePassword() {
     return
   }
   const res = await axios.put('/api/user/change-password', {
-    oldPassword: form.value.oldPassword,
-    newPassword: form.value.newPassword
+    old_password: form.value.oldPassword,
+    new_password: form.value.newPassword
   })
   if (res.data.success) {
     alert('修改成功')

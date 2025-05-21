@@ -10,8 +10,8 @@ public class Customer {
     private String password;
     private String email;
     private String phone;
-    private Integer gender; // 0-女，1-男
-    private Date createTime;
+    private Integer gender;
+    private Date create_time;
     private Integer points;
-    private Integer status; // 0-未消费，1-已消费
+    private Integer status;
 }

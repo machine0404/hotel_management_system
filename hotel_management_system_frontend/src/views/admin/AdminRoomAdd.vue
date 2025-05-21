@@ -46,7 +46,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import axios from '@/api/admin'
 const room = ref({
   room_number: '',
   type_id: '',

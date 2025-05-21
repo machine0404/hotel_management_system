@@ -1,20 +1,17 @@
 package com.example.hotel_management_system_backend.controller;
 
 import com.example.hotel_management_system_backend.entity.Customer;
+import com.example.hotel_management_system_backend.entity.Room;
+import com.example.hotel_management_system_backend.entity.RoomType;
+import com.example.hotel_management_system_backend.entity.Booking;
 import com.example.hotel_management_system_backend.service.UserService;
 import com.example.hotel_management_system_backend.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/user")
@@ -22,224 +19,161 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
-
-    @Autowired
-    private RedisTemplate<String, String> redisTemplate; // 加这一行
-
     @PostMapping("/login")
-    public Map<String, Object> login(@RequestBody Map<String, String> params) {
-        String username = params.get("username");
-        String password = params.get("password");
-        Map<String, Object> result = new HashMap<>();
+    public LoginResponse login(@RequestBody Customer param) {
+        String username = param.getUsername();
+        String password = param.getPassword();
         Customer user = userService.findByUsername(username);
         if (user == null || !user.getPassword().equals(password)) {
-            result.put("message", "用户名或密码错误");
-            throw new RuntimeException("用户名或密码错误");
+            return new LoginResponse(null, "用户名或密码错误");
         }
         String token = JwtUtil.generateToken(username);
-        result.put("token", token);
-        result.put("message", "登录成功");
-        return result;
+        return new LoginResponse(token, "登录成功");
     }
 
     @PostMapping("/register")
-    public Map<String, Object> register(@RequestBody Map<String, String> params) {
-        String username = params.get("username");
-        String password = params.get("password");
-        Map<String, Object> result = new HashMap<>();
+    public ApiResponse register(@RequestBody Customer param) {
+        String username = param.getUsername();
+        String password = param.getPassword();
         if (username == null || password == null) {
-            result.put("message", "用户名和密码不能为空");
-            return result;
+            return new ApiResponse(false, "用户名和密码不能为空");
         }
         Customer exist = userService.findByUsername(username);
         if (exist != null) {
-            result.put("message", "用户名已存在");
-            return result;
+            return new ApiResponse(false, "用户名已存在");
         }
-        Customer user = new Customer();
-        user.setUsername(username);
-        user.setPassword(password);
-        user.setEmail(username + "@example.com");
-        user.setPhone(""); // 允许为空字符串
-        user.setGender(0);
-        user.setCreateTime(new Date());
-        user.setPoints(0);
-        user.setStatus(0);
-        userService.save(user);
-        result.put("message", "注册成功");
-        return result;
+        param.setEmail(username + "@example.com");
+        param.setPhone("");
+        param.setGender(0);
+        param.setPoints(0);
+        param.setStatus(0);
+        userService.save(param);
+        return new ApiResponse(true, "注册成功");
     }
 
     @GetMapping("/room-list")
-    public List<Map<String, Object>> roomList(
-        @RequestParam(required = false) String check_in_date,
-        @RequestParam(required = false) String check_out_date
-    ) {
-        String baseSql = "SELECT r.*, t.name AS type_name, t.price, t.feature, t.description, t.cover_image " +
-                         "FROM room r LEFT JOIN room_type t ON r.type_id = t.id";
-        if (check_in_date != null && check_out_date != null) {
-            // 查询未被预定的房间
-            baseSql += " WHERE r.id NOT IN (SELECT room_id FROM booking WHERE " +
-                       "NOT (check_out_date <= ? OR check_in_date >= ?))";
-            return jdbcTemplate.queryForList(baseSql, check_in_date, check_out_date);
-        } else {
-            return jdbcTemplate.queryForList(baseSql);
-        }
-    }
-
-    @PostMapping("/book-room")
-    public Map<String, Object> bookRoom(@RequestBody Map<String, Object> params, @RequestHeader("Authorization") String auth) {
-        Map<String, Object> result = new HashMap<>();
-        // 1. 获取用户名（假设你的JwtUtil有parseToken方法，返回Claims）
-        String token = auth.replace("Bearer ", "");
-        String username = com.example.hotel_management_system_backend.util.JwtUtil.parseToken(token).getSubject();
-        Customer user = userService.findByUsername(username);
-        if (user == null) {
-            result.put("success", false);
-            result.put("message", "请先登录");
-            return result;
-        }
-        Integer userId = user.getId();
-        Integer roomId = (Integer) params.get("room_id");
-        String checkinStr = (String) params.get("checkin");
-        String checkoutStr = (String) params.get("checkout");
-        Integer people = (Integer) params.get("people");
-        Boolean needInvoice = (Boolean) params.get("need_invoice");
-
-        // 解析日期字符串，兼容 "2025-04-30" 和 "2025-04-30T16:00:00.000Z"
-        LocalDate checkinDate = parseDate(checkinStr);
-        LocalDate checkoutDate = parseDate(checkoutStr);
-
-        // 查询房间单价
-        Map<String, Object> room = jdbcTemplate.queryForMap("SELECT t.price FROM room r LEFT JOIN room_type t ON r.type_id = t.id WHERE r.id = ?", roomId);
-        double price = Double.parseDouble(room.get("price").toString());
-
-        // 计算天数
-        long days = java.time.temporal.ChronoUnit.DAYS.between(
-            checkinDate,
-            checkoutDate
-        );
-        if (days <= 0) {
-            result.put("success", false);
-            result.put("message", "离店时间必须晚于入住时间");
-            return result;
-        }
-        double total = price * days;
-
-        // 插入订单
-        int n = jdbcTemplate.update(
-            "INSERT INTO booking (user_id, room_id, check_in_date, check_out_date, adults, invoice_needed, total_amount, status, create_time) VALUES (?, ?, ?, ?, ?, ?, ?, 0, NOW())",
-            userId, roomId, checkinDate, checkoutDate, people, needInvoice != null && needInvoice ? 1 : 0, total
-        );
-        result.put("success", n > 0);
-        return result;
+    public List<Room> roomList(@RequestParam(required = false) String check_in_date,
+                               @RequestParam(required = false) String check_out_date) {
+        return userService.getRoomList(check_in_date, check_out_date);
     }
 
     @GetMapping("/room-type-list")
-    public List<Map<String, Object>> roomTypeList() {
-        String sql = "SELECT id, name FROM room_type";
-        return jdbcTemplate.queryForList(sql);
+    public List<RoomType> roomTypeList() {
+        return userService.getRoomTypeList();
     }
 
-    // 获取当前登录用户信息
     @GetMapping("/me")
-    public Map<String, Object> getMyInfo(@RequestHeader("Authorization") String auth) {
+    public Customer getMyInfo(@RequestHeader("Authorization") String auth) {
         String token = auth.replace("Bearer ", "");
         String username = JwtUtil.parseToken(token).getSubject();
         Customer user = userService.findByUsername(username);
         if (user == null) throw new RuntimeException("用户不存在");
-        Map<String, Object> result = new HashMap<>();
-        result.put("id", user.getId());
-        result.put("username", user.getUsername());
-        result.put("email", user.getEmail());
-        result.put("phone", user.getPhone());
-        result.put("gender", user.getGender());
-        result.put("create_time", user.getCreateTime());
-        result.put("points", user.getPoints());
-        result.put("status", user.getStatus());
-        return result;
+        return user;
     }
 
-    // 只允许修改邮箱、性别、手机号
     @PutMapping("/me")
-    public Map<String, Object> updateMyInfo(@RequestBody Map<String, Object> params, @RequestHeader("Authorization") String auth) {
+    public ApiResponse updateMyInfo(@RequestBody Customer param, @RequestHeader("Authorization") String auth) {
         String token = auth.replace("Bearer ", "");
         String username = JwtUtil.parseToken(token).getSubject();
         Customer user = userService.findByUsername(username);
-        if (user == null) throw new RuntimeException("用户不存在");
-        String email = (String) params.get("email");
-        String phone = (String) params.get("phone");
-        Integer gender = params.get("gender") != null ? (Integer) params.get("gender") : user.getGender();
-        int n = jdbcTemplate.update(
-            "UPDATE customer SET email=?, phone=?, gender=? WHERE id=?",
-            email, phone, gender, user.getId()
-        );
-        Map<String, Object> result = new HashMap<>();
-        result.put("success", n > 0);
-        return result;
+        if (user == null) return new ApiResponse(false, "用户不存在");
+        boolean ok = userService.updateMyInfo(user.getId(), param.getEmail(), param.getPhone(), param.getGender());
+        return new ApiResponse(ok, ok ? "修改成功" : "修改失败");
     }
 
     @GetMapping("/my-orders")
-    public List<Map<String, Object>> getMyOrders(@RequestHeader("Authorization") String auth) {
+    public List<Booking> getMyOrders(@RequestHeader("Authorization") String auth) {
         String token = auth.replace("Bearer ", "");
         String username = JwtUtil.parseToken(token).getSubject();
         Customer user = userService.findByUsername(username);
         if (user == null) throw new RuntimeException("用户不存在");
-        String sql = "SELECT b.id, b.room_id, rt.name AS type_name, b.check_in_date, b.check_out_date, b.create_time, b.total_amount, b.status, b.adults, b.invoice_needed " +
-                     "FROM booking b LEFT JOIN room r ON b.room_id = r.id LEFT JOIN room_type rt ON r.type_id = rt.id " +
-                     "WHERE b.user_id = ? ORDER BY b.create_time DESC";
-        return jdbcTemplate.queryForList(sql, user.getId());
+        return userService.getMyOrders(user.getId());
     }
 
-    // 修改密码
     @PutMapping("/change-password")
-    public Map<String, Object> changePassword(@RequestBody Map<String, String> params, @RequestHeader("Authorization") String auth) {
+    public ApiResponse changePassword(@RequestBody ChangePasswordParam param, @RequestHeader("Authorization") String auth) {
         String token = auth.replace("Bearer ", "");
         String username = JwtUtil.parseToken(token).getSubject();
         Customer user = userService.findByUsername(username);
-        Map<String, Object> result = new HashMap<>();
-        if (user == null) {
-            result.put("success", false);
-            result.put("message", "用户不存在");
-            return result;
-        }
-        String oldPassword = params.get("oldPassword");
-        String newPassword = params.get("newPassword");
-        if (!user.getPassword().equals(oldPassword)) {
-            result.put("success", false);
-            result.put("message", "原密码错误");
-            return result;
-        }
-        int n = jdbcTemplate.update("UPDATE customer SET password=? WHERE id=?", newPassword, user.getId());
-        result.put("success", n > 0);
-        return result;
+        if (user == null) return new ApiResponse(false, "用户不存在");
+        boolean ok = userService.changePassword(user.getId(), param.old_password, param.new_password);
+        return new ApiResponse(ok, ok ? "修改成功" : "原密码错误");
     }
 
-    // 删除订单（只允许删除自己的订单）
-    @DeleteMapping("/my-orders/{id}")
-    public Map<String, Object> deleteMyOrder(@PathVariable Integer id, @RequestHeader("Authorization") String auth) {
-        Map<String, Object> result = new HashMap<>();
-        // 假设你有 user 信息
-        // int n = jdbcTemplate.update("DELETE FROM booking WHERE id=? AND user_id=?", id, user.getId());
-        int n = jdbcTemplate.update("DELETE FROM booking WHERE id=?", id);
-        // 删除订单相关缓存
-        redisTemplate.delete("order_list");
-        redisTemplate.delete("order_wait_list");
-        result.put("success", n > 0);
-        result.put("message", n > 0 ? "删除成功" : "删除失败");
-        return result;
-    }
+    @PostMapping("/book-room")
+    public ApiResponse bookRoom(@RequestBody BookRoomParam param, @RequestHeader("Authorization") String auth) {
+        String token = auth.replace("Bearer ", "");
+        String username = JwtUtil.parseToken(token).getSubject();
+        Customer user = userService.findByUsername(username);
+        if (user == null) return new ApiResponse(false, "请先登录");
+        List<Room> rooms = userService.getRoomList(null, null);
+        Room room = rooms.stream().filter(r -> r.getId().equals(param.room_id)).findFirst().orElse(null);
+        if (room == null) return new ApiResponse(false, "房间不存在");
 
-    // 解析日期字符串，兼容 "2025-04-30" 和 "2025-04-30T16:00:00.000Z"
-    private LocalDate parseDate(String dateStr) {
+        // 兼容前端传来的 ISO 日期格式
+        LocalDate checkinDate;
+        LocalDate checkoutDate;
         try {
-            // 先尝试 yyyy-MM-dd
-            return LocalDate.parse(dateStr, DateTimeFormatter.ISO_LOCAL_DATE);
-        } catch (DateTimeParseException e) {
-            // 再尝试 yyyy-MM-ddTHH:mm:ss.SSSZ 或 Z
-            return LocalDate.parse(dateStr.substring(0, 10), DateTimeFormatter.ISO_LOCAL_DATE);
+            checkinDate = LocalDate.parse(param.checkin.substring(0, 10));
+            checkoutDate = LocalDate.parse(param.checkout.substring(0, 10));
+        } catch (Exception e) {
+            return new ApiResponse(false, "日期格式错误");
         }
+
+        long days = java.time.temporal.ChronoUnit.DAYS.between(checkinDate, checkoutDate);
+        if (days <= 0) return new ApiResponse(false, "离店时间必须晚于入住时间");
+        double total = room.getPrice() * days;
+        boolean ok = userService.bookRoom(user.getId().longValue(), param.room_id, param.checkin, param.checkout, param.people, param.need_invoice, total);
+        return new ApiResponse(ok, ok ? "预定成功" : "预定失败");
+    }
+
+    @DeleteMapping("/my-orders/{id}")
+    public ApiResponse deleteMyOrder(@PathVariable Integer id, @RequestHeader("Authorization") String auth) {
+        String token = auth.replace("Bearer ", "");
+        String username = JwtUtil.parseToken(token).getSubject();
+        Customer user = userService.findByUsername(username);
+        if (user == null) return new ApiResponse(false, "用户不存在");
+        boolean ok = userService.deleteMyOrder(id, user.getId());
+        return new ApiResponse(ok, ok ? "删除成功" : "删除失败");
+    }
+
+    // DTO
+    public static class ApiResponse {
+        private boolean success;
+        private String message;
+        public ApiResponse() {}
+        public ApiResponse(boolean success, String message) {
+            this.success = success;
+            this.message = message;
+        }
+        public boolean isSuccess() { return success; }
+        public void setSuccess(boolean success) { this.success = success; }
+        public String getMessage() { return message; }
+        public void setMessage(String message) { this.message = message; }
+    }
+    public static class LoginResponse {
+        private String token;
+        private String message;
+        public LoginResponse() {}
+        public LoginResponse(String token, String message) {
+            this.token = token;
+            this.message = message;
+        }
+        public String getToken() { return token; }
+        public void setToken(String token) { this.token = token; }
+        public String getMessage() { return message; }
+        public void setMessage(String message) { this.message = message; }
+    }
+    // 关键：参数全部下划线风格
+    public static class ChangePasswordParam {
+        public String old_password;
+        public String new_password;
+    }
+    public static class BookRoomParam {
+        public Integer room_id;
+        public String checkin;
+        public String checkout;
+        public Integer people;
+        public Boolean need_invoice;
     }
 }

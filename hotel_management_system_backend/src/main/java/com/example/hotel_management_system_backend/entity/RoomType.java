@@ -9,5 +9,5 @@ public class RoomType {
     private Double price;
     private String description;
     private String feature;
-    private String coverImage;
+    private String cover_image;
 }

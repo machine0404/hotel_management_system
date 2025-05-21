@@ -60,8 +60,9 @@
 
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
-import axios from 'axios'
+import axios from '@/api/user'
 import { ElMessage } from 'element-plus'
+import dayjs from 'dayjs'
 
 const form = ref({
   type_id: '',
@@ -137,21 +138,28 @@ function increase() {
   if (form.value.people < maxPeople.value) form.value.people++
 }
 
+function formatDate(val) {
+  if (!val) return ''
+  // 兼容Date对象和字符串
+  if (typeof val === 'string') return val.slice(0, 10)
+  return dayjs(val).format('YYYY-MM-DD')
+}
+
 async function bookRoom() {
-  if (!form.value.room_id) {
-    ElMessage.warning('请选择房间号')
+  if (!form.value.room_id || !form.value.checkin || !form.value.checkout) {
+    ElMessage.warning('请先选择房间和时间')
     return
   }
   const res = await axios.post('/api/user/book-room', {
     room_id: form.value.room_id,
-    checkin: form.value.checkin,
-    checkout: form.value.checkout,
+    checkin: formatDate(form.value.checkin),
+    checkout: formatDate(form.value.checkout),
     people: form.value.people,
     need_invoice: form.value.need_invoice
   })
   if (res.data.success) {
     ElMessage.success('预定成功')
-    canBook.value = false
+    // 可跳转或清空表单
   } else {
     ElMessage.error(res.data.message || '预定失败')
   }
