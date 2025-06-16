@@ -1,5 +1,8 @@
 <template>
   <el-card>
+    <div style="margin-bottom: 16px; text-align: right;">
+      <el-button type="primary" @click="loadOrders">刷新</el-button>
+    </div>
     <el-table :data="orders" style="width: 100%">
       <el-table-column prop="id" label="订单ID" width="80" />
       <el-table-column prop="user_id" label="用户ID" width="80" />
@@ -26,25 +29,23 @@
     </el-table>
   </el-card>
 </template>
+
 <script setup>
 import { ref, onMounted } from 'vue'
 import axios from '@/api/admin'
 import dayjs from 'dayjs'
 const orders = ref([])
-onMounted(async () => {
+async function loadOrders() {
   const res = await axios.get('/api/admin/order-list')
   orders.value = res.data
-})
+}
+onMounted(loadOrders)
 function fapiaoFormat(row) {
   return row.invoice_needed === 1 ? '需要' : '不需要'
 }
 function statusFormat(row) {
-  // 如果只显示三种
-  const map = {0: '未处理', 1: '已接受', 2: '已取消'};
-  return map[row.status] || '其它';
-  // 如果要显示全部四种
-  // const map = {0: '未处理', 1: '已入住', 2: '退订', 3: '已完成'};
-  // return map[row.status] || '未知';
+  const map = {0: '未处理', 1: '已接受', 2: '已取消'}
+  return map[row.status] || '其它'
 }
 function formatDate(val) {
   if (!val) return ''

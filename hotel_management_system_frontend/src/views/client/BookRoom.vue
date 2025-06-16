@@ -1,61 +1,83 @@
 <template>
-  <el-card>
-    <el-form :model="form">
-      <el-form-item label="客房类型">
-        <el-select v-model="form.type_id" placeholder="请选择客房类型" @change="onTypeChange">
-          <el-option
-            v-for="type in roomTypes"
-            :key="type.id"
-            :label="type.name"
-            :value="type.id"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="入住时间">
-        <el-date-picker v-model="form.checkin" type="date" />
-      </el-form-item>
-      <el-form-item label="离店时间">
-        <el-date-picker v-model="form.checkout" type="date" />
-      </el-form-item>
-      <el-form-item label="房间号">
-        <el-select v-model="form.room_id" placeholder="请先选择类型和时间" :disabled="roomList.length === 0">
-          <el-option
-            v-for="room in roomList"
-            :key="room.id"
-            :label="room.room_number"
-            :value="room.id"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="入住人数">
-        <div style="display: flex; align-items: center;">
-          <el-button @click="decrease" :disabled="form.people <= 1" size="small">-</el-button>
-          <span style="margin: 0 12px;">{{ form.people }}</span>
-          <el-button @click="increase" :disabled="form.people >= maxPeople" size="small">+</el-button>
-          <span style="margin-left: 8px;">(最大{{ maxPeople }}人)</span>
+  <div class="book-room">
+    <el-form :model="form" label-width="120px" class="booking-form">
+      <div class="form-content">
+        <div class="form-section">
+          <h2 class="section-title">预订信息</h2>
+          <el-form-item label="客房类型">
+            <el-select v-model="form.type_id" placeholder="请选择客房类型" @change="onTypeChange" class="full-width">
+              <el-option
+                v-for="type in roomTypes"
+                :key="type.id"
+                :label="type.name"
+                :value="type.id"
+              />
+            </el-select>
+          </el-form-item>
+          <div class="date-group">
+            <el-form-item label="入住时间">
+              <el-date-picker
+                v-model="form.checkin"
+                type="date"
+                placeholder="选择入住日期"
+                :disabled-date="disablePastDates"
+                value-format="YYYY-MM-DD"
+                class="full-width"
+              />
+            </el-form-item>
+            <el-form-item label="离店时间">
+              <el-date-picker v-model="form.checkout" type="date" class="full-width" />
+            </el-form-item>
+          </div>
+          <el-form-item label="房间号">
+            <el-select v-model="form.room_id" placeholder="请先选择类型和时间" :disabled="roomList.length === 0" class="full-width">
+              <el-option
+                v-for="room in roomList"
+                :key="room.id"
+                :label="room.room_number"
+                :value="room.id"
+              />
+            </el-select>
+          </el-form-item>
         </div>
-      </el-form-item>
 
-      <el-form-item label="是否需要发票">
-        <el-radio-group v-model="form.need_invoice">
-          <el-radio :label="true">需要</el-radio>
-          <el-radio :label="false">不需要</el-radio>
-        </el-radio-group>
-      </el-form-item>
+        <div class="form-section">
+          <h2 class="section-title">入住详情</h2>
+          <el-form-item label="入住人数" class="people-counter">
+            <div class="counter-container">
+              <el-button @click="decrease" :disabled="form.people <= 1" size="large" class="counter-btn">
+                <el-icon><Minus /></el-icon>
+              </el-button>
+              <span class="people-count">{{ form.people }}</span>
+              <el-button @click="increase" :disabled="form.people >= maxPeople" size="large" class="counter-btn">
+                <el-icon><Plus /></el-icon>
+              </el-button>
+              <span class="max-people">(最大{{ maxPeople }}人)</span>
+            </div>
+          </el-form-item>
 
-      <el-form-item label="价格">
-        <span v-if="selectedRoom && form.checkin && form.checkout">
-          {{ totalPrice }} 元
-        </span>
-        <span v-else></span>
-      </el-form-item>
+          <el-form-item label="是否需要发票" class="invoice-option">
+            <el-radio-group v-model="form.need_invoice">
+              <el-radio :label="true">需要</el-radio>
+              <el-radio :label="false">不需要</el-radio>
+            </el-radio-group>
+          </el-form-item>
 
-      <el-form-item>
-        <el-button type="primary" v-if="!canBook" @click="searchRooms">搜索</el-button>
-        <el-button type="success" v-else @click="bookRoom">预定</el-button>
-      </el-form-item>
+          <el-form-item label="价格" class="price-display">
+            <span v-if="selectedRoom && form.checkin && form.checkout" class="total-price">
+              ¥ {{ totalPrice }}
+            </span>
+            <span v-else class="no-price">请完善预订信息</span>
+          </el-form-item>
+        </div>
+
+        <div class="form-actions">
+          <el-button type="primary" v-if="!canBook" @click="searchRooms" size="large">搜索可用房间</el-button>
+          <el-button type="success" v-else @click="bookRoom" size="large">确认预订</el-button>
+        </div>
+      </div>
     </el-form>
-  </el-card>
+  </div>
 </template>
 
 <script setup>
@@ -63,6 +85,7 @@ import { ref, onMounted, computed, watch } from 'vue'
 import axios from '@/api/user'
 import { ElMessage } from 'element-plus'
 import dayjs from 'dayjs'
+import { Plus, Minus } from '@element-plus/icons-vue'
 
 const form = ref({
   type_id: '',
@@ -164,4 +187,140 @@ async function bookRoom() {
     ElMessage.error(res.data.message || '预定失败')
   }
 }
+
+// 禁用过去的日期
+function disablePastDates(date) {
+  // 只禁用今天0点之前的日期，今天可以选
+  return date < new Date(new Date().setHours(0, 0, 0, 0))
+}
 </script>
+
+<style scoped>
+.book-room {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  min-height: calc(100vh - 300px);
+}
+
+.booking-form {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.form-content {
+  padding: 20px;
+}
+
+.form-section {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 30px;
+  margin-bottom: 30px;
+}
+
+.section-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #303133;
+  margin: 0 0 25px 0;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #EBEEF5;
+}
+
+.date-group {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.counter-container {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.counter-btn {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.people-count {
+  font-size: 18px;
+  min-width: 30px;
+  text-align: center;
+}
+
+.max-people {
+  color: #909399;
+  margin-left: 10px;
+}
+
+.invoice-option {
+  margin-top: 25px;
+}
+
+.price-display {
+  margin-top: 25px;
+}
+
+.total-price {
+  font-size: 24px;
+  color: #f56c6c;
+  font-weight: bold;
+}
+
+.no-price {
+  color: #909399;
+  font-size: 16px;
+}
+
+.form-actions {
+  text-align: center;
+  margin-top: 40px;
+}
+
+.form-actions .el-button {
+  min-width: 180px;
+  height: 45px;
+  font-size: 16px;
+}
+
+:deep(.el-form-item__label) {
+  font-size: 16px;
+  font-weight: 500;
+  color: #606266;
+}
+
+:deep(.el-input__inner),
+:deep(.el-select__input) {
+  height: 45px;
+  font-size: 16px;
+}
+
+:deep(.el-radio__label) {
+  font-size: 16px;
+}
+
+@media (max-width: 768px) {
+  .form-section {
+    padding: 20px;
+  }
+
+  .date-group {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions .el-button {
+    width: 100%;
+  }
+}
+</style>

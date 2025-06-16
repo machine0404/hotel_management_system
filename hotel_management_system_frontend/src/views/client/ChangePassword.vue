@@ -1,38 +1,40 @@
 <template>
-  <el-card>
-    <el-form :model="form" label-width="100px" style="max-width: 400px;">
-      <el-form-item label="原密码">
-        <el-input v-model="form.oldPassword" :type="showOld ? 'text' : 'password'" autocomplete="off">
-          <template #suffix>
-            <el-icon @click="showOld = !showOld" style="cursor:pointer;">
-              <component :is="showOld ? View : Hide" />
-            </el-icon>
-          </template>
-        </el-input>
-      </el-form-item>
-      <el-form-item label="新密码">
-        <el-input v-model="form.newPassword" :type="showNew ? 'text' : 'password'" autocomplete="off">
-          <template #suffix>
-            <el-icon @click="showNew = !showNew" style="cursor:pointer;">
-              <component :is="showNew ? View : Hide" />
-            </el-icon>
-          </template>
-        </el-input>
-      </el-form-item>
-      <el-form-item label="确认新密码">
-        <el-input v-model="form.confirmPassword" :type="showConfirm ? 'text' : 'password'" autocomplete="off">
-          <template #suffix>
-            <el-icon @click="showConfirm = !showConfirm" style="cursor:pointer;">
-              <component :is="showConfirm ? View : Hide" />
-            </el-icon>
-          </template>
-        </el-input>
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" @click="changePassword">修改密码</el-button>
-      </el-form-item>
+  <div class="change-password">
+    <el-form :model="form" label-width="120px" class="password-form">
+      <div class="form-content">
+        <el-form-item label="原密码">
+          <el-input v-model="form.oldPassword" :type="showOld ? 'text' : 'password'" autocomplete="off">
+            <template #suffix>
+              <el-icon @click="showOld = !showOld" style="cursor:pointer;">
+                <component :is="showOld ? View : Hide" />
+              </el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item label="新密码">
+          <el-input v-model="form.newPassword" :type="showNew ? 'text' : 'password'" autocomplete="off">
+            <template #suffix>
+              <el-icon @click="showNew = !showNew" style="cursor:pointer;">
+                <component :is="showNew ? View : Hide" />
+              </el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item label="确认新密码">
+          <el-input v-model="form.confirmPassword" :type="showConfirm ? 'text' : 'password'" autocomplete="off">
+            <template #suffix>
+              <el-icon @click="showConfirm = !showConfirm" style="cursor:pointer;">
+                <component :is="showConfirm ? View : Hide" />
+              </el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="changePassword" class="submit-btn">修改密码</el-button>
+        </el-form-item>
+      </div>
     </el-form>
-  </el-card>
+  </div>
 </template>
 
 <script setup>
@@ -72,3 +74,68 @@ async function changePassword() {
   }
 }
 </script>
+
+<style scoped>
+.change-password {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.password-form {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.form-content {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.form-content :deep(.el-form-item) {
+  margin-bottom: 35px;
+}
+
+.form-content :deep(.el-form-item:last-child) {
+  margin-bottom: 0;
+  text-align: center;
+  margin-top: 50px;
+}
+
+.password-form :deep(.el-input__wrapper) {
+  padding: 6px 20px;
+}
+
+.password-form :deep(.el-input__inner) {
+  height: 45px;
+  font-size: 16px;
+}
+
+.password-form :deep(.el-form-item__label) {
+  font-size: 16px;
+  font-weight: 500;
+  color: #606266;
+  padding-right: 20px;
+}
+
+.submit-btn {
+  width: 180px;
+  height: 45px;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+/* 图标样式 */
+.password-form :deep(.el-input__suffix) {
+  color: #909399;
+  transition: color 0.3s;
+  font-size: 18px;
+  padding: 0 5px;
+}
+
+.password-form :deep(.el-input__suffix):hover {
+  color: #409EFF;
+}
+</style>

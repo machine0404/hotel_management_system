@@ -142,15 +142,17 @@ public class AdminService {
 
     public boolean acceptOrder(Integer id) {
         int rows = jdbcTemplate.update("UPDATE booking SET status = 1 WHERE id = ?", id);
-        // 如有订单缓存，记得清理
+        // 清理等待列表和订单列表缓存
         redisTemplate.delete("order_wait_list");
+        redisTemplate.delete("order_list");
         return rows > 0;
     }
 
     public boolean cancelOrder(Integer id) {
         int rows = jdbcTemplate.update("UPDATE booking SET status = 2 WHERE id = ?", id);
-        // 如有订单缓存，记得清理
+        // 清理等待列表和订单列表缓存
         redisTemplate.delete("order_wait_list");
+        redisTemplate.delete("order_list");
         return rows > 0;
     }
 

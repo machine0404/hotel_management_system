@@ -82,15 +82,21 @@ export default {
       this.flag = !this.flag;
     },
     async handleLogin() {
+      if (!this.loginForm.username || !this.loginForm.password) {
+        alert('用户名和密码不能为空')
+        return
+      }
       try {
         const res = await loginApi(this.loginForm)
         // 保存 token 到本地
         if (res.token) {
           localStorage.setItem('token', res.token)
+          this.$router.push('/client/find-room') // 登录成功后跳转
+        } else {
+          alert('用户名或密码错误')
         }
-        this.$router.push('/client/find-room') // 登录成功后跳转
       } catch (err) {
-        alert(err.response?.data?.message || '登录失败')
+        alert('用户名或密码错误')
       }
     },
     async handleRegister() {
