@@ -115,9 +115,6 @@ public class AdminController {
         return new ApiResponse(ok, ok ? "修改成功" : "修改失败");
     }
 
-    // 其它增删改查接口同理，参数和返回值都用实体类，所有数据库和缓存操作全部调用AdminService
-    // ...
-
     public static class LoginResponse {
         private String token;
         private String message;

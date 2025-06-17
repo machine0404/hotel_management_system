@@ -120,10 +120,10 @@ watch(() => form.value.room_id, () => {
 
 const days = computed(() => {
   if (!form.value.checkin || !form.value.checkout) return 0
-  const start = new Date(form.value.checkin)
-  const end = new Date(form.value.checkout)
-  const diff = (end - start) / (1000 * 60 * 60 * 24)
-  return diff > 0 ? diff : 0
+  const start = dayjs(form.value.checkin)
+  const end = dayjs(form.value.checkout)
+  const diff = end.diff(start, 'day')
+  return diff >= 0 ? diff + 1 : 0
 })
 
 const totalPrice = computed(() => {

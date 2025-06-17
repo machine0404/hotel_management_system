@@ -1,8 +1,5 @@
 <template>
   <el-card>
-    <div style="margin-bottom: 16px; text-align: right;">
-      <el-button type="primary" @click="loadOrders">刷新</el-button>
-    </div>
     <el-table :data="orders" style="width: 100%">
       <el-table-column prop="id" label="订单ID" width="80" />
       <el-table-column prop="user_id" label="用户ID" width="80" />
